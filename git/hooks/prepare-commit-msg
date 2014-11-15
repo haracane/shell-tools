@@ -1,0 +1,17 @@
+#!/bin/bash
+
+TICKET_PREFIX=${TICKET_PREFIX:-#}
+
+message_file=$1
+mode=$2
+
+if [ "$mode" = "" ] || [ "$mode" = "message" ] ; then
+  ticket_number=`git branch | grep "*" | awk '{print $2}' | perl -nE 'say $& if /[0-9]+$/'`
+  ticket_text=$TICKET_PREFIX$ticket_number
+
+  if [ "$ticket_number" != "" ] && cat $message_file | grep -v $ticket_text > /dev/null; then
+    mv $message_file $message_file.tmp
+    echo -n "$ticket_text " > $message_file
+    cat $message_file.tmp >> $message_file
+  fi
+fi

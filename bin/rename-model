@@ -1,0 +1,51 @@
+#!/bin/bash
+from=$1
+to=$2
+
+ruby_cmd="ruby -r active_support/core_ext"
+target_dirs="app db/migrate lib spec"
+
+function rename-word() {
+  local from=$1
+  local to=$2
+
+  local from_plural=$($ruby_cmd -e 'puts ARGV[0].pluralize' $from)
+  local to_plural=$($ruby_cmd -e 'puts ARGV[0].pluralize' $to)
+
+  local files=$(grep -lR "$from_plural" $target_dirs)
+  if [ "$files" != '' ]; then
+    gsed "s|$from_plural|$to_plural|g" -i $files
+  fi
+
+  files=$(grep -lR "$from" $target_dirs)
+  if [ "$files" != '' ]; then
+    gsed "s|$from|$to|g" -i $files
+  fi
+}
+
+function rename-file() {
+  local from=$1
+  local to=$2
+
+  local from_plural=$($ruby_cmd -e 'puts ARGV[0].pluralize' $from)
+  local to_plural=$($ruby_cmd -e 'puts ARGV[0].pluralize' $to)
+
+  for file in $(find $target_dirs -name "*$from*.rb"); do
+    mv $file $(echo $file | sed "s|$from|$to|g")
+  done
+
+  for file in $(find $target_dirs -name "*$from_plural*.rb"); do
+    mv $file $(echo $file | sed "s|$from_plural|$to_plural|g")
+  done
+}
+
+from_underscore=$($ruby_cmd -e 'puts ARGV[0].underscore' $from)
+to_underscore=$($ruby_cmd -e 'puts ARGV[0].underscore' $to)
+
+from_camel=$($ruby_cmd -e 'puts ARGV[0].camelize' $from)
+to_camel=$($ruby_cmd -e 'puts ARGV[0].camelize' $to)
+
+rename-word $from_underscore $to_underscore
+rename-word $from_camel $to_camel
+
+rename-file $from_underscore $to_underscore
